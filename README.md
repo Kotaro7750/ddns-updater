@@ -1,4 +1,5 @@
 # DDNS Updater
+![Docker Version](https://img.shields.io/docker/v/7750koutarou/ddns-updater.svg?style=flat-square)
 
 A lightweight Dynamic DNS (DDNS) updater for Cloudflare that automatically updates your DNS records when your public IP address changes.
 

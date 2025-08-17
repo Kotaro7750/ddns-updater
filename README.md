@@ -17,6 +17,8 @@ A lightweight Dynamic DNS (DDNS) updater for Cloudflare that automatically updat
 | `ZONE_NAME` | Yes | - | Your domain name (e.g., `example.com`) |
 | `RECORD_NAME` | Yes | - | DNS record name to update (e.g., `home`, `ddns`) |
 | `CLOUDFLARE_API_TOKEN` | Yes | - | Cloudflare API token with required permissions |
+| `ENABLE_IPV4` | No | `true` | Enable IPv4 address monitoring and updates |
+| `ENABLE_IPV6` | No | `true` | Enable IPv6 address monitoring and updates |
 
 ## Usage
 

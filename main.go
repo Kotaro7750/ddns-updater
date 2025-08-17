@@ -22,6 +22,8 @@ type Config struct {
 	CronExpression string `env:"CRON_EXPRESSION" envDefault:"*/5 * * * *"`
 	ZoneName       string `env:"ZONE_NAME,required"`
 	RecordName     string `env:"RECORD_NAME,required"`
+	EnableIPv4     bool   `env:"ENABLE_IPV4" envDefault:"true"`
+	EnableIPv6     bool   `env:"ENABLE_IPV6" envDefault:"true"`
 }
 
 var lastCheckedGlobalIPAddress = MyGlobalIPAddress{}
@@ -39,7 +41,7 @@ func main() {
 		return
 	}
 
-	slog.Info("Starting DDNS Updater", "zone", config.ZoneName, "record", config.RecordName, "cron", config.CronExpression)
+	slog.Info("Starting DDNS Updater", "zone", config.ZoneName, "record", config.RecordName, "cron", config.CronExpression, "ipv4_enabled", config.EnableIPv4, "ipv6_enabled", config.EnableIPv6)
 
 	recordUpdater = RecordUpdater{
 		ZoneName:   config.ZoneName,
@@ -77,29 +79,38 @@ func PeriodicUpdateTask() {
 		return
 	}
 
-	if !lastCheckedGlobalIPAddress.IPv4.Equal(addr.IPv4) {
-		slog.Info("IPv4 address has changed", "old", lastCheckedGlobalIPAddress.IPv4.String(), "new", addr.IPv4.String())
+	if config.EnableIPv4 {
+		if !lastCheckedGlobalIPAddress.IPv4.Equal(addr.IPv4) {
+			slog.Info("IPv4 address has changed", "old", lastCheckedGlobalIPAddress.IPv4.String(), "new", addr.IPv4.String())
 
-		if err := recordUpdater.updateDNSRecord(addr.IPv4); err != nil {
-			slog.Error("Failed to update DNS record", "error", err)
-			return
+			if err := recordUpdater.updateDNSRecord(addr.IPv4); err != nil {
+				slog.Error("Failed to update DNS record", "error", err)
+				return
+			}
+
+			lastCheckedGlobalIPAddress.IPv4 = addr.IPv4
+		} else {
+			slog.Info("IPv4 address has not changed. skipping update")
 		}
-
-		lastCheckedGlobalIPAddress.IPv4 = addr.IPv4
 	} else {
-		slog.Info("IPv4 address has not changed. skipping update")
+		slog.Info("IPv4 update is disabled. skipping update")
 	}
-	if !lastCheckedGlobalIPAddress.IPv6.Equal(addr.IPv6) {
-		slog.Info("IPv6 address has changed", "old", lastCheckedGlobalIPAddress.IPv6.String(), "new", addr.IPv6.String())
 
-		if err := recordUpdater.updateDNSRecord(addr.IPv6); err != nil {
-			slog.Error("Failed to update DNS record", "error", err)
-			return
+	if config.EnableIPv6 {
+		if !lastCheckedGlobalIPAddress.IPv6.Equal(addr.IPv6) {
+			slog.Info("IPv6 address has changed", "old", lastCheckedGlobalIPAddress.IPv6.String(), "new", addr.IPv6.String())
+
+			if err := recordUpdater.updateDNSRecord(addr.IPv6); err != nil {
+				slog.Error("Failed to update DNS record", "error", err)
+				return
+			}
+
+			lastCheckedGlobalIPAddress.IPv6 = addr.IPv6
+		} else {
+			slog.Info("IPv6 address has not changed. skipping update")
 		}
-
-		lastCheckedGlobalIPAddress.IPv6 = addr.IPv6
 	} else {
-		slog.Info("IPv6 address has not changed. skipping update")
+		slog.Info("IPv6 update is disabled. skipping update")
 	}
 
 	slog.Info("Periodic update task finished")
